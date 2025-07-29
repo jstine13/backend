@@ -33,6 +33,61 @@ router.post("/user", async(req, res) =>{
     }
 })
 
+//auth or login
+//post request- reason is because when you log in you're creating a new "session"
+router.post("/auth", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: "Missing Username or Password" });
+    }
+
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(401).json({ error: "Bad Username" });
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json({ error: "Bad Password" });
+    }
+
+    // Create token
+    const token = jwt.encode({ username: user.username }, secret);
+    const auth = 1;
+
+    res.json({
+      username: user.username,
+      token,
+      auth
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+//check status of user witha valid token 
+router.get("/status", async(req, res)=>{
+    if(!req.headers["x-auth"]){
+        return res.status(401).json({error: "Missing X-Auth"})
+    }
+
+    //if x auth contains the token
+    const token = req.headers["x-auth"]
+    try{
+        const decoded = jwt.decode(token, secret)
+        //send back all username and status fields to the user or front end
+        let users = User.find({}, "username status")
+        res.json(users)
+    }
+    catch(ex){
+        res.status(401).json({error: "invalid jwt"})
+    }
+})
+
+
 //grab all the songs in a db
 
 router.get("/songs", async(req,res) =>{
