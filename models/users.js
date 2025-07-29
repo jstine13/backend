@@ -1,10 +1,9 @@
-const db = require("../db")
+const mongoose = require("../db");
 
-const User = db.model("User", {
-    //hidden parameter of _id
-    username: { type: String, required: true },
-    password: { type: String, required: true },
-    status:    String 
-})
+const User = mongoose.model("User", {
+  username: { type: String, required: true },
+  password: { type: String, required: true },
+  status:   { type: String, default: "user" }
+});
 
 module.exports = User;
