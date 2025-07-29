@@ -2,6 +2,7 @@ const express = require("express")
 var cors = require('cors')
 // const bodyParser = require('body-parser')
 const jwt = require('jwt-simple')
+const mongoose = require("mongoose")
 const User = require("./models/users")
 
 const Song = require("./models/song")
@@ -9,9 +10,12 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch(err => console.error("MongoDB connection error:", err))
 
 const router = express.Router()
-const secret = "supersecret"
+const secret = process.env.JWT_SECRET || "supersecret"
 
 //creating a new user
 router.post("/user", async(req, res) =>{
@@ -53,20 +57,21 @@ router.post("/auth", async (req, res) => {
       return res.status(401).json({ error: "Bad Password" });
     }
 
-    // Create token
-    const token = jwt.encode({ username: user.username }, secret);
-    const auth = 1;
-
+    //create a token that is encoded withe the jwt library, and send back the username.. this will be important
+    //we also will send back as part of the token that you are currently authorized, we could do tihs witha boolean or number value ie auth 0 youre not auth 1 you are
+    const token = jwt.encode({ username: user.username }, secret)
+    const auth = 1
+    //respond with the token
     res.json({
       username: user.username,
       token,
       auth
-    });
+    })
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
+    console.error(err)
+    res.status(500).json({ error: "Server error" })
   }
-});
+})
 
 //check status of user witha valid token 
 router.get("/status", async(req, res)=>{
@@ -79,7 +84,7 @@ router.get("/status", async(req, res)=>{
     try{
         const decoded = jwt.decode(token, secret)
         //send back all username and status fields to the user or front end
-        let users = User.find({}, "username status")
+        const users = await User.find({}, "username status")
         res.json(users)
     }
     catch(ex){
@@ -99,7 +104,7 @@ router.get("/songs", async(req,res) =>{
    catch (err){
     console.log(err)
    }
-});
+})
 // grab a single songid
 
 router.get("/songs/:id", async (req, res)=> {
@@ -110,7 +115,7 @@ router.get("/songs/:id", async (req, res)=> {
     catch (err){
         res.status(400).send(err)
     }
-});
+})
 
 
 router.post("/songs", async(req,res) => {
@@ -123,7 +128,7 @@ router.post("/songs", async(req,res) => {
     catch(err){
         res.status(400).send(err)
     }
-});
+})
 
 //update is to update an existing record/resource/database entry... it uses a put request
 
@@ -141,24 +146,28 @@ router.put("/songs/:id", async(req, res) => {
     catch(err){
         res.status(400).send(err)
     }
-});
+})
 
 // delete
 
 router.delete("/songs/:id", async(req, res) => {
     //method or function in mongoos/mongo to delete a sing instance of a song or object
     try {
-        const song = await Song.findById(req.params.id)
-        console.log(song)
-        await Song.deleteOne({ _id: song._id })
+        const result = await Song.deleteOne({ _id: req.params.id })
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: "Song not found" })
+        }
         res.sendStatus(204)
     }
     catch(err){
         res.status(400).send(err)
     }
-});
+})
 
-
+const PORT = process.env.PORT || 3000;
 
 app.use("/api", router)
-app.listen(3000)
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
