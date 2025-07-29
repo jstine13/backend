@@ -1,24 +1,36 @@
-//setup.. this is similiar to when we use default ! + tab with html
 const express = require("express")
-//activates or tells this app variable to be an express server
+var cors = require('cors')
+
+const Song = require("./models/song")
 const app = express()
+app.use(cors())
+
+
 const router = express.Router()
 
-//starts the web server app.listen(portnumber,function)
-app.listen(3000,function() {
-    console.log("listening on port 3000")
+//grab all the songs in a db
+
+router.get("/songs", async(req,res) =>{
+   try{
+    const songs = await Song.find({})
+    res.send(songs)
+    console.log(songs)
+   }
+   catch (err){
+    console.log(err)
+   }
 })
 
-// making an api using routes. routes are used to handle browser request. they look like urls. the difference is that when a browser requests a route it is dynamically handled using a function
-
-
-//GET request or a regular request when someone goes to 
-// http://localhost:3000/hello
-//when using a funtion on a route, we almost always have a parameter or handle a response and request
-app.get("/hello", function(req, res){
-    res.send("<h1>Hello Express</h1>")
+router.post("/songs", async(req,res) => {
+    try{
+        const song = await new Song(req.body)
+        await song.save()
+        res.status(201).json(song)
+        console.log(song)
+    }
+    catch(err){
+        res.status(400).send(err)
+    }
 })
-
-app.get("/goodbye", function(req, res) {
-    res.send("<h1>Goodbye, Express</h1>");
-});
+app.use("/api", router)
+app.listen(3000)
