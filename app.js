@@ -20,8 +20,8 @@ router.get("/songs", async(req,res) =>{
    catch (err){
     console.log(err)
    }
-})
-// grab a sing songid
+});
+// grab a single songid
 
 router.get("/songs/:id", async (req, res)=> {
     try{
@@ -31,7 +31,7 @@ router.get("/songs/:id", async (req, res)=> {
     catch (err){
         res.status(400).send(err)
     }
-})
+});
 
 
 router.post("/songs", async(req,res) => {
@@ -44,7 +44,7 @@ router.post("/songs", async(req,res) => {
     catch(err){
         res.status(400).send(err)
     }
-})
+});
 
 //update is to update an existing record/resource/database entry... it uses a put request
 
@@ -62,7 +62,22 @@ router.put("/songs/:id", async(req, res) => {
     catch(err){
         res.status(400).send(err)
     }
-})
+});
+
+// delete
+
+router.delete("/songs/:id", async(req, res) => {
+    //method or function in mongoos/mongo to delete a sing instance of a song or object
+    try {
+        const song = await Song.findById(req.params.id)
+        console.log(song)
+        await Song.deleteOne({ _id: song._id })
+        res.sendStatus(204)
+    }
+    catch(err){
+        res.status(400).send(err)
+    }
+});
 
 
 
