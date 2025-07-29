@@ -1,5 +1,8 @@
 const express = require("express")
 var cors = require('cors')
+// const bodyParser = require('body-parser')
+const jwt = require('jwt-simple')
+const User = require("./models/users")
 
 const Song = require("./models/song")
 const app = express()
@@ -8,6 +11,27 @@ app.use(express.json())
 
 
 const router = express.Router()
+const secret = "supersecret"
+
+//creating a new user
+router.post("/user", async(req, res) =>{
+    if(!req.body.username || !req.body.password) {
+        res.status(400).json({error: "Missing Username or Password"})
+    }
+    const newUser = await new User({
+        username: req.body.username,
+        password: req.body.password,
+        status: req.body.status
+    })
+    try{
+        await newUser.save()
+        console.log(newUser)
+        res.sendStatus(201)//created
+    }
+    catch(err){
+        res.status(400).send(err)
+    }
+})
 
 //grab all the songs in a db
 
